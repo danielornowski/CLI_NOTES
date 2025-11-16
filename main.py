@@ -3,7 +3,7 @@ from app.file_manager import load_notes, save_notes
 from app.menu import show_menu
 from app.notes_logic import add_note, show_notes, delete_note, add_note_with_text, delete_note_by_index, update_note,update_note_by_index
 from cli_parser import get_args
-
+from database import get_all_notes, add_note_to_db
 
 
 def run_cli():
@@ -13,6 +13,14 @@ def run_cli():
 
     
     notes = load_notes(notes_file)
+
+    note = add_note_to_db("My first note")
+    print("Added note: ", note.id, note.text, note.timestamp )
+
+    all_notes = get_all_notes()
+    print("all notes in database: ")
+    for n in all_notes:
+        print(n.id, n.text, n.timestamp)
 
     
     args = get_args()
