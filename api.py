@@ -1,61 +1,65 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from typing import List 
-from app.file_manager import load_notes, save_notes
-from app.notes_logic import delete_note, add_note, show_notes,  update_note
+from database import get_all_notes, add_note_to_db, delete_note_db, update_note_db, get_note_by_id
 import os
 
 
 
-class Note(BaseModel):
+class NoteResponse(BaseModel):
+    id: int
+    text: str
+    timestamp: str
+    class Config:
+        from_attributes = True
+
+class NoteCreate(BaseModel):
     text: str
 
 app = FastAPI(title="CLI NOTES API")
 
-DATA_DIR = "data"
-NOTES_FILE = os.path.join(DATA_DIR, "notes.json")
-
-if not os.path.exists(DATA_DIR):
-    os.makedirs(DATA_DIR)
-
-notes = load_notes(NOTES_FILE)
 
 @app.get("/")
 def read_root():
     return {"message": "Welcome to your Notes API!"}
 
-@app.get("/notes", response_model=List[str])
-def get_all_notes():
+@app.get("/notes", response_model=List[NoteResponse])
+def api_get_all_notes():
+    notes = get_all_notes()
     return notes
 
-@app.get("/notes/{note_id}")
-def get_note(note_id: int):
-    if note_id < 0 or note_id >= len(notes):
+@app.get("/notes/{note_id}", response_model=NoteResponse)
+def api_get_note(note_id: int):
+    note = get_note_by_id(note_id)
+    if note is None:
         raise HTTPException(status_code=404, detail="Note not found")
-    return {"id": note_id, "text": notes[note_id]}
+    return note
 
-@app.post("/notes")
-def add_note_api(note:Note):
+@app.post("/notes", response_model=NoteResponse)
+def api_add_note(note: NoteCreate):
+    
     if not note.text.strip():
-        raise HTTPException(status_cod=400, detail="Note cannot be empty")
-    add_note(notes, note.text)
-    save_notes(notes, NOTES_FILE)
-    return {"message": "Note added successfully", "note": note.text}
+        raise HTTPException(status_code=400, detail="Note cannot be empty")
+    new_note = add_note_to_db(note.text)
+    if new_note is None:
+        raise HTTPException(status_code=500, detail="Database error")
+    return new_note
 
 @app.delete("/notes/{note_id}")
-def delete_note_api(note_id: int):
-    if note_id < 0 or note_id >= len(notes):
+def api_delete_note(note_id: int):
+    result = delete_note_db(note_id)
+    if result == False:
         raise HTTPException(status_code=404, detail="Note not found")
-    delete_note = delete_note(notes, note_id)
-    save_notes(notes, NOTES_FILE)
-    return {"message": f"Deleted note: {delete_note}"}
+    return {"message": "Note deleted successfully"}
     
-@app.put("/notes/{note_id}")
-def update_note_api(note_id: int, updated_note: Note):
-    if note_id < 0 or note_id >= len(notes):
-        raise HTTPException(status_code=400, detail="Note not found")
-    if not update_note.text.strip():
-        raise HTTPException(status_cod=400, detail="Note cannot be empty")
-    update_note(notes, note_id, update_note.text)
-    save_notes(notes, NOTES_FILE)
-    return {"message": f"Note {note_id} updated successfully", "note": updated_note.text}
+    
+@app.put("/notes/{note_id}", response_model=NoteResponse)
+def api_update_note(note_id: int, updated_note: NoteCreate):
+    note = get_note_by_id(note_id)
+    if not note:
+        raise HTTPException(status_code=404, detail="Note not found")
+    if not updated_note.text.strip():
+        raise HTTPException(status_code=400, detail="Note text cannot be empty")
+    updated = update_note_db(note_id, updated_note.text)
+    return updated
+

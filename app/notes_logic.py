@@ -1,105 +1,91 @@
 from datetime import datetime
+from database import add_note_to_db, get_all_notes, delete_note_db, get_note_by_id, update_note_db
 
-def add_note(notes):
+def add_note():
     text = input('Type your note: ').strip()
     if not text:
         print("Note cannot be empty! ")
         return
-    now = datetime.now()
-    timestamp = now.strftime("%Y-%m-%d %H:%M")
-    note_with_time = f"{text} [{timestamp}]"
-    notes.append(note_with_time)
-    print("Note added successfully")
+    new_note = add_note_to_db(text) 
+    print(f"Note added successfully with id {new_note.id} at {new_note.timestamp} ")
 
 
-
-
-def show_notes(notes):
+def show_notes():
+    notes = get_all_notes()
     if not notes:
             print(" NOTES IS EMPTY ")
+            return
     else:
-        #print(notes)
-        for i, note in enumerate(notes, start=1):
-            print(f"{i}. {note}")
+        for note in notes:
+            print(f"{note.id}. {note.text} {note.timestamp} ")
 
 
-def delete_note(notes):
-    for i, note in enumerate(notes, start=1):
-        print(f"{i}. {note}")
+def delete_note():
+
+    show_notes()
+
     print("Which note you want to delete? ")
-
     try:
-        index = int(input("Type number of note to delete")) - 1
-        if 0 <= index < len(notes):
-            removed = notes.pop(index)
-            print(f"Deleted note: {removed}")
+        note_id = int(input("Type id of note to delete"))
+        result = delete_note_db(note_id)
+        if result == True:
+            print("Note deleted successfully")
         else:
-            print("Invalid note number")
+            print("Note not found")
     except ValueError:
-        print("Please enter a valid number")
+        print("Please enter a valid id")
 
-def update_note(notes):
-    if not notes:
-        print("No notes to update!")
-        return
-    
-    for i,note in enumerate(notes, start=1):
-        print(f"{i}. {note}")
+def update_note():
 
-    index = int(input("Type the number of the note to update: ")) - 1
-    if index < 0 or index >= len(notes):
-        print("Invalid note number!")
-        return
-    now = datetime.now()
-    timestamp = now.strftime("%Y-%m-%d %H:%M")
-    new_note = input("Type the new note: ")
-    if not new_note.strip():
-        return
-    
-    notes[index] = f"{new_note} [{timestamp}]"
-    print("Note updated successfully")
+    show_notes()
 
-#FOR ARGS
+    print("Which note you want to update? ")
+    try:
+        note_id = int(input("Type number of note to update"))
+        note = get_note_by_id(note_id)
+        if not note:
+            print("Note not found")
+            return
+        new_text = input("Enter new note text").strip()
+        if not new_text:
+            print("Note cannot be empty")
+            return
+        updated = update_note_db(note_id, new_text)
+        print(f"Updated note {updated.id}: {updated.text} ({updated.timestamp})")
+    except ValueError:
+        print("Please enter a valid id")
+
+################################################# #FOR ARGS ################################
  
-def delete_note_by_index(notes, index):
-    for i, note in enumerate(notes, start=1):
-        print(f"{i}. {note}")
-    print("Which note you want to delete? ")
-    number = index -1
-    try:
-        if 0 <= number < len(notes):
-            removed = notes.pop(number)
-            print(f"Deleted note: {removed}")
-        else:
-            print("Invalid note number")
-    except ValueError:
-        print("Please enter a valid number")
+def delete_note_by_index(note_id):
+    result = delete_note_db(note_id)
+    if result:
+        print(f"Deleted note with id {note_id}")
+    else:
+        print("Note not found")
 
  
-def add_note_with_text(notes, text):
-    if not text:
+def add_note_with_text(text):
+    if not text.strip():
         print("Note cannot be empty! ")
         return
-    now = datetime.now()
-    timestamp = now.strftime("%Y-%m-%d %H:%M")
-    note_with_time = f"{text} [{timestamp}]"
-    notes.append(note_with_time)
-    print("Note added successfully")
+    new_note = add_note_to_db(text)
+    print(f"Added note {new_note.id}: {new_note.text ({new_note.timestamp})}")
 
-def update_note_by_index(notes, index, text=None):
+def update_note_by_index(note_id, text=None):
+    note = get_note_by_id(note_id)
+    if not note:
+        print("Note not found")
+        return
     
-    number = index - 1 
-    try: 
-        if 0 <= number < len(notes):
-            if not text:
-                print("Which note you want to update? ")
-                text = input("Type the new note: ")
-            now = datetime.now()
-            timestamp = now.strftime("%Y-%m-%d %H:%M")
-            notes[number] = f"{text} [{timestamp}]"
-            for i, note in enumerate(notes, start=1):
-                print(f"{i}. {note}")
-        else: 
-            print("Invalid note number")
-    except ValueError:
-        print("Please enter a vailid number")
+    if not text:
+        text = input("Type the new text: ").strip()
+    
+    if not text:
+        print("Note cannot be empty!")
+        return
+    
+    updated =update_note_db(note_id, text)
+    print(f"Updated note {updated.id}: {updated.text} ({updated.timestamp})")
+    
+    
