@@ -19,10 +19,13 @@ class Note(Base):
 Base.metadata.create_all(bind=engine)
 
 
-def add_note_to_db(text: str):
-    db = SessionLocal()
+def add_note_to_db(text: str, db=None):
+    close_after = False
+    if db is None:
+        db = SessionLocal()
+        close_after = True
     try:
-        now = datetime.now().strftime("%Y-%m-%d %H:%M")
+        now = datetime.now()
         new_note = Note(text=text, timestamp = now)
         db.add(new_note)
         db.commit()
@@ -33,25 +36,37 @@ def add_note_to_db(text: str):
         print("Database error while adding note:", e)
         return None
     finally:
-        db.close()
+        if close_after:
+            db.close()
 
-def get_all_notes():
-    db = SessionLocal()
+def get_all_notes(db=None):
+    close_after = False
+    if db is None:
+        db = SessionLocal()
+        close_after = True
     try:
         notes = db.query(Note).all()
         return notes
     finally: 
-        db.close()
+        if close_after:
+            db.close()
 
-def get_note_by_id(note_id: int):
-    db = SessionLocal()
+def get_note_by_id(note_id: int, db=None):
+    close_after = False
+    if db is None:
+        db = SessionLocal()
+        close_after = True
     try:
         return db.query(Note).filter(Note.id == note_id).first()
     finally:
-        db.close()
+        if close_after:
+            db.close()
 
-def update_note_db(note_id: int, new_text: str):
-    db = SessionLocal()
+def update_note_db(note_id: int, new_text: str, db=None):
+    close_after = False
+    if db is None:
+        db = SessionLocal()
+        close_after = True
     try:
         note = db.query(Note).filter(Note.id == note_id).first()
 
@@ -70,10 +85,14 @@ def update_note_db(note_id: int, new_text: str):
         print("Database error while updating", e)
         return None
     finally:
-        db.close()
+        if close_after:
+            db.close()
 
-def delete_note_db(note_id):
-    db = SessionLocal()
+def delete_note_db(note_id, db=None):
+    close_after = False
+    if db is None:
+        db = SessionLocal()
+        close_after = True
     try:
         note = db.query(Note).filter(Note.id == note_id).first()
 
@@ -89,5 +108,6 @@ def delete_note_db(note_id):
         print("Database error while deleting", e)
         return False 
     finally:
-        db.close()
+        if close_after:
+            db.close()
 

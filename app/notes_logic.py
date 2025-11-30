@@ -55,37 +55,6 @@ def update_note():
     except ValueError:
         print("Please enter a valid id")
 
-################################################# #FOR ARGS ################################
- 
-def delete_note_by_index(note_id):
-    result = delete_note_db(note_id)
-    if result:
-        print(f"Deleted note with id {note_id}")
-    else:
-        print("Note not found")
 
- 
-def add_note_with_text(text):
-    if not text.strip():
-        print("Note cannot be empty! ")
-        return
-    new_note = add_note_to_db(text)
-    print(f"Added note {new_note.id}: {new_note.text ({new_note.timestamp})}")
-
-def update_note_by_index(note_id, text=None):
-    note = get_note_by_id(note_id)
-    if not note:
-        print("Note not found")
-        return
-    
-    if not text:
-        text = input("Type the new text: ").strip()
-    
-    if not text:
-        print("Note cannot be empty!")
-        return
-    
-    updated =update_note_db(note_id, text)
-    print(f"Updated note {updated.id}: {updated.text} ({updated.timestamp})")
     
     
